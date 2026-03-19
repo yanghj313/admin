@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>프로그램 관리 - DGE 관리자</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+		<link rel="stylesheet" href="/src/css/admin.css" />
+	</head>
+	<body>
+		<div class="admin-layout">
+			<aside class="sidebar">
+				<div class="sidebar-logo">📚 <span>DGE</span> 관리자</div>
+				<nav class="sidebar-nav">
+					<a class="sidebar-link" href="/admin/index.html">🏠 대시보드</a>
+					<a class="sidebar-link active" href="/admin/programs.html">🎓 프로그램 관리</a>
+					<a class="sidebar-link" href="/admin/events.html">🎉 이벤트 관리</a>
+					<a class="sidebar-link" href="/admin/posts.html">📋 게시글 관리</a>
+					<a class="sidebar-link" href="/admin/users.html">👤 사용자 관리</a>
+				</nav>
+				<div class="sidebar-footer">
+					<button data-action="signout" class="btn btn-outline btn-sm" style="width: 100%">로그아웃</button>
+				</div>
+			</aside>
+
+			<main class="admin-main">
+				<div class="admin-topbar">
+					<span class="topbar-title">🎓 프로그램 관리</span>
+					<div class="topbar-actions">
+						<button class="btn btn-primary btn-sm" id="btn-add">＋ 프로그램 추가</button>
+					</div>
+				</div>
+				<div class="admin-content">
+					<div class="gallery-grid" id="programs-grid" style="margin-bottom: 32px">
+						<div style="grid-column: 1/-1; text-align: center"><div class="spinner"></div></div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<!-- 등록/수정 Modal -->
+		<div class="modal-overlay" id="program-modal">
+			<div class="modal" style="max-width: 640px">
+				<div class="modal-header">
+					<h3 class="modal-title" id="modal-title">프로그램 추가</h3>
+					<button class="modal-close" id="modal-close">✕</button>
+				</div>
+				<form id="program-form">
+					<input type="hidden" id="edit-id" />
+					<div class="form-group">
+						<label class="form-label">제목 <span class="required">*</span></label>
+						<input type="text" class="form-input" id="f-title" required />
+					</div>
+					<div class="form-group">
+						<label class="form-label">설명</label>
+						<textarea class="form-textarea" id="f-desc" style="min-height: 100px"></textarea>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+						<div class="form-group">
+							<label class="form-label">시작일</label>
+							<input type="date" class="form-input" id="f-start" />
+						</div>
+						<div class="form-group">
+							<label class="form-label">종료일</label>
+							<input type="date" class="form-input" id="f-end" />
+						</div>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+						<div class="form-group">
+							<label class="form-label">장소</label>
+							<input type="text" class="form-input" id="f-location" />
+						</div>
+						<div class="form-group">
+							<label class="form-label">정원</label>
+							<input type="number" class="form-input" id="f-capacity" />
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="form-label">썸네일 URL</label>
+						<input type="url" class="form-input" id="f-thumb" placeholder="https://..." />
+					</div>
+					<div class="form-group">
+						<label class="form-label">상태</label>
+						<select class="form-select" id="f-status">
+							<option value="upcoming">예정</option>
+							<option value="ongoing">진행중</option>
+							<option value="ended">종료</option>
+						</select>
+					</div>
+					<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px">
+						<button type="button" class="btn btn-outline btn-sm" id="btn-cancel">취소</button>
+						<button type="submit" class="btn btn-primary btn-sm">저장</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<script type="module">
+			import { requireAuth, renderAdminUser } from '/src/js/auth.js';
+			import { supabase } from '/src/lib/supabase.js';
+			import { formatDate, truncate, showToast, uploadFile } from '/src/js/utils.js';
+
+			await requireAuth();
+			await renderAdminUser();
+
+			async function loadPrograms() {
+				const { data, error } = await supabase.from('programs').select('*').order('created_at', { ascending: false });
+				const grid = document.getElementById('programs-grid');
+				if (error || !data?.length) {
+					grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-light);padding:48px">등록된 프로그램이 없습니다.</div>';
+					return;
+				}
+				const statusColor = { upcoming: 'badge-blue', ongoing: 'badge-green', ended: 'badge-gray' };
+				const statusLabel = { upcoming: '예정', ongoing: '진행중', ended: '종료' };
+				grid.innerHTML = data
+					.map(
+						p => `
+      <div class="card">
+        <img class="card-img" src="${p.thumbnail_url || '/placeholder.svg'}" alt="${p.title}" onerror="this.src='/placeholder.svg'" />
+        <div class="card-body">
+          <span class="badge ${statusColor[p.status] || 'badge-gray'}" style="margin-bottom:8px">${statusLabel[p.status] || p.status}</span>
+          <div class="card-title">${truncate(p.title, 50)}</div>
+          <div class="card-desc">${truncate(p.description, 80)}</div>
+          <div class="card-meta">
+            ${p.date_start ? `<span>📅 ${formatDate(p.date_start)}</span>` : ''}
+            ${p.location ? `<span>📍 ${p.location}</span>` : ''}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-outline btn-sm" onclick="editProgram('${p.id}')">수정</button>
+            <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none" onclick="deleteProgram('${p.id}')">삭제</button>
+          </div>
+        </div>
+      </div>
+    `
+					)
+					.join('');
+			}
+
+			window.editProgram = async id => {
+				const { data } = await supabase.from('programs').select('*').eq('id', id).single();
+				if (!data) return;
+				document.getElementById('modal-title').textContent = '프로그램 수정';
+				document.getElementById('edit-id').value = id;
+				document.getElementById('f-title').value = data.title || '';
+				document.getElementById('f-desc').value = data.description || '';
+				document.getElementById('f-start').value = data.date_start || '';
+				document.getElementById('f-end').value = data.date_end || '';
+				document.getElementById('f-location').value = data.location || '';
+				document.getElementById('f-capacity').value = data.capacity || '';
+				document.getElementById('f-thumb').value = data.thumbnail_url || '';
+				document.getElementById('f-status').value = data.status || 'upcoming';
+				document.getElementById('program-modal').classList.add('open');
+			};
+
+			window.deleteProgram = async id => {
+				if (!confirm('삭제하시겠습니까?')) return;
+				await supabase.from('programs').delete().eq('id', id);
+				showToast('삭제되었습니다.', 'info');
+				loadPrograms();
+			};
+
+			document.getElementById('btn-add').onclick = () => {
+				document.getElementById('program-form').reset();
+				document.getElementById('edit-id').value = '';
+				document.getElementById('modal-title').textContent = '프로그램 추가';
+				document.getElementById('program-modal').classList.add('open');
+			};
+
+			document.getElementById('modal-close').onclick = () => document.getElementById('program-modal').classList.remove('open');
+			document.getElementById('btn-cancel').onclick = () => document.getElementById('program-modal').classList.remove('open');
+
+			document.getElementById('program-form').onsubmit = async e => {
+				e.preventDefault();
+				const id = document.getElementById('edit-id').value;
+				const payload = {
+					title: document.getElementById('f-title').value,
+					description: document.getElementById('f-desc').value,
+					date_start: document.getElementById('f-start').value || null,
+					date_end: document.getElementById('f-end').value || null,
+					location: document.getElementById('f-location').value,
+					capacity: parseInt(document.getElementById('f-capacity').value) || null,
+					thumbnail_url: document.getElementById('f-thumb').value,
+					status: document.getElementById('f-status').value,
+				};
+				if (id) {
+					await supabase.from('programs').update(payload).eq('id', id);
+					showToast('수정되었습니다.', 'success');
+				} else {
+					await supabase.from('programs').insert([payload]);
+					showToast('등록되었습니다.', 'success');
+				}
+				document.getElementById('program-modal').classList.remove('open');
+				loadPrograms();
+			};
+
+			loadPrograms();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>DGE Book Life - 내 손의 책, 내 삶의 힘</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+	</head>
+	<body class="page-body">
+		<!-- ── Header ─────────────────────────────────────────── -->
+		<header class="site-header">
+			<div class="container header-inner">
+				<a href="/" class="site-logo">
+					<img src="/assets/logo.png" alt="DGE Book Life" onerror="this.style.display = 'none'" />
+					<span>DGE Book Life</span>
+				</a>
+
+				<nav class="main-nav" id="main-nav">
+					<div class="nav-item">
+						내 손의 책
+						<div class="nav-dropdown">
+							<a href="/pages/book/campaign.html">캠페인 소개</a>
+							<a href="/pages/book/archive-2025.html">2025 아카이브</a>
+							<a href="/pages/book/download.html">다운로드 자료</a>
+						</div>
+					</div>
+					<div class="nav-item">
+						내 삶의 힘
+						<div class="nav-dropdown">
+							<a href="/pages/life/program.html">프로그램</a>
+							<a href="/pages/life/event.html">이벤트</a>
+							<a href="/pages/life/contest.html">공모전</a>
+						</div>
+					</div>
+					<a class="nav-item" href="/pages/board/index.html">게시판</a>
+				</nav>
+
+				<button class="hamburger" id="hamburger" aria-label="메뉴 열기"><span></span><span></span><span></span></button>
+			</div>
+		</header>
+
+		<!-- ── Hero ───────────────────────────────────────────── -->
+		<section class="hero">
+			<div class="container">
+				<h1>내 손의 책,<br />내 삶의 힘</h1>
+				<p>책을 통해 삶을 변화시키는 독서문화진흥 캠페인에 함께해 주세요.</p>
+				<div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap">
+					<a href="/pages/book/campaign.html" class="btn btn-white btn-lg">캠페인 소개</a>
+					<a href="/pages/life/program.html" class="btn btn-outline btn-lg" style="border-color: white; color: white">프로그램 보기</a>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── 내 손의 책 소개 ─────────────────────────────────── -->
+		<section class="section">
+			<div class="container">
+				<div class="section-header">
+					<span class="section-tag">내 손의 책</span>
+					<h2 class="section-title">캠페인 활동</h2>
+					<p class="section-subtitle">2025년 다양한 독서 캠페인 활동에 참여하세요</p>
+				</div>
+				<div class="gallery-grid" id="book-cards">
+					<!-- JS로 렌더링 -->
+					<div class="card">
+						<div style="background: var(--accent-light); height: 180px; display: flex; align-items: center; justify-content: center; font-size: 2rem">📚</div>
+						<div class="card-body">
+							<div class="badge badge-blue" style="margin-bottom: 8px">캠페인 소개</div>
+							<div class="card-title">2025 내만내책 캠페인</div>
+							<div class="card-desc">내가 만드는 내 책 만들기 프로젝트에 참여하세요.</div>
+							<div class="card-meta">
+								<a href="/pages/book/campaign.html" class="btn btn-outline btn-sm" style="margin-top: 12px">자세히 보기</a>
+							</div>
+						</div>
+					</div>
+					<div class="card">
+						<div style="background: #fef3c7; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 2rem">🏆</div>
+						<div class="card-body">
+							<div class="badge badge-yellow" style="margin-bottom: 8px">2025 아카이브</div>
+							<div class="card-title">내만내책 공모전</div>
+							<div class="card-desc">북끈챌린지, 인생 책 공유 등 다양한 활동 아카이브</div>
+							<div class="card-meta">
+								<a href="/pages/book/archive-2025.html" class="btn btn-outline btn-sm" style="margin-top: 12px">아카이브 보기</a>
+							</div>
+						</div>
+					</div>
+					<div class="card">
+						<div style="background: #d1fae5; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 2rem">📥</div>
+						<div class="card-body">
+							<div class="badge badge-green" style="margin-bottom: 8px">다운로드</div>
+							<div class="card-title">자료 다운로드</div>
+							<div class="card-desc">캠페인 관련 자료를 무료로 다운로드하세요.</div>
+							<div class="card-meta">
+								<a href="/pages/book/download.html" class="btn btn-outline btn-sm" style="margin-top: 12px">다운로드</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── 프로그램 & 이벤트 ──────────────────────────────── -->
+		<section class="section" style="background: white">
+			<div class="container">
+				<div class="section-header">
+					<span class="section-tag">내 삶의 힘</span>
+					<h2 class="section-title">진행 중인 프로그램 & 이벤트</h2>
+				</div>
+				<div class="gallery-grid" id="programs-list">
+					<div style="text-align: center; padding: 48px; grid-column: 1/-1">
+						<div class="spinner"></div>
+					</div>
+				</div>
+				<div style="text-align: center; margin-top: 32px">
+					<a href="/pages/life/program.html" class="btn btn-outline">전체 프로그램 보기</a>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── Footer ─────────────────────────────────────────── -->
+		<footer class="site-footer">
+			<div class="container">
+				<div class="footer-inner">
+					<div class="footer-brand">
+						<div class="site-logo" style="color: white; margin-bottom: 12px">DGE Book Life</div>
+						<p>독서문화진흥을 통해<br />더 나은 삶을 만들어갑니다.</p>
+					</div>
+					<div class="footer-links">
+						<h4>내 손의 책</h4>
+						<ul>
+							<li><a href="/pages/book/campaign.html">캠페인 소개</a></li>
+							<li><a href="/pages/book/archive-2025.html">2025 아카이브</a></li>
+							<li><a href="/pages/book/download.html">다운로드 자료</a></li>
+						</ul>
+					</div>
+					<div class="footer-links">
+						<h4>내 삶의 힘</h4>
+						<ul>
+							<li><a href="/pages/life/program.html">프로그램</a></li>
+							<li><a href="/pages/life/event.html">이벤트</a></li>
+							<li><a href="/pages/life/contest.html">공모전</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="footer-bottom">
+					<p>© 2025 DGE Book Life. All rights reserved.</p>
+				</div>
+			</div>
+		</footer>
+
+		<script type="module">
+			import { getPrograms } from '/src/lib/supabase.js';
+			import { formatDate, truncate } from '/src/js/utils.js';
+
+			// 프로그램 로드
+			async function loadPrograms() {
+				const grid = document.getElementById('programs-list');
+				const { data, error } = await getPrograms({ limit: 3 });
+				if (error || !data?.length) {
+					grid.innerHTML = '<p style="text-align:center;color:var(--text-light);grid-column:1/-1">등록된 프로그램이 없습니다.</p>';
+					return;
+				}
+				grid.innerHTML = data
+					.map(
+						p => `
+        <div class="card">
+          <img class="card-img" src="${p.thumbnail_url || '/placeholder.svg'}" alt="${p.title}" onerror="this.src='/placeholder.svg'" />
+          <div class="card-body">
+            <span class="badge ${p.status === 'ongoing' ? 'badge-green' : 'badge-gray'}" style="margin-bottom:8px">
+              ${p.status === 'upcoming' ? '예정' : p.status === 'ongoing' ? '진행중' : '종료'}
+            </span>
+            <div class="card-title">${truncate(p.title, 50)}</div>
+            <div class="card-desc">${truncate(p.description, 80)}</div>
+            <div class="card-meta">
+              <span>📅 ${formatDate(p.date_start)}</span>
+              ${p.location ? `<span>📍 ${p.location}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `
+					)
+					.join('');
+			}
+
+			loadPrograms();
+
+			// 햄버거 메뉴
+			document.getElementById('hamburger').addEventListener('click', () => {
+				const nav = document.getElementById('main-nav');
+				nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+			});
+		</script>
+	</body>
+</html>

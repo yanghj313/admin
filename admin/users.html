@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>사용자 관리 - DGE 관리자</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+		<link rel="stylesheet" href="/src/css/admin.css" />
+	</head>
+	<body>
+		<div class="admin-layout">
+			<aside class="sidebar">
+				<div class="sidebar-logo">📚 <span>DGE</span> 관리자</div>
+				<nav class="sidebar-nav">
+					<a class="sidebar-link" href="/admin/index.html">🏠 대시보드</a>
+					<a class="sidebar-link" href="/admin/programs.html">🎓 프로그램 관리</a>
+					<a class="sidebar-link" href="/admin/events.html">🎉 이벤트 관리</a>
+					<a class="sidebar-link" href="/admin/posts.html">📋 게시글 관리</a>
+					<a class="sidebar-link active" href="/admin/users.html">👤 사용자 관리</a>
+				</nav>
+				<div class="sidebar-footer">
+					<button data-action="signout" class="btn btn-outline btn-sm" style="width: 100%">로그아웃</button>
+				</div>
+			</aside>
+			<main class="admin-main">
+				<div class="admin-topbar">
+					<span class="topbar-title">👤 사용자 관리</span>
+				</div>
+				<div class="admin-content">
+					<!-- 안내 박스 -->
+					<div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 24px; font-size: 0.875rem; color: #92400e">
+						<strong>💡 Supabase Auth 사용자 관리</strong><br />
+						실제 사용자 목록 및 이메일 인증은
+						<a href="https://supabase.com/dashboard" target="_blank" style="color: var(--primary); text-decoration: underline">Supabase 대시보드 > Authentication > Users</a>
+						에서 관리하세요.
+					</div>
+
+					<!-- 참여자 이메일 목록 (posts에서 집계) -->
+					<div class="admin-table-wrap">
+						<div class="table-header">
+							<span class="table-title">게시글 작성자 목록</span>
+							<div class="table-filters">
+								<input type="text" class="search-input" id="search-input" placeholder="이름, 이메일 검색..." />
+								<button class="btn btn-outline btn-sm" id="export-btn">📊 CSV 내보내기</button>
+							</div>
+						</div>
+						<table class="admin-table">
+							<thead>
+								<tr>
+									<th>이름</th>
+									<th>이메일</th>
+									<th>연락처</th>
+									<th>참여 횟수</th>
+									<th>최근 참여</th>
+								</tr>
+							</thead>
+							<tbody id="users-list">
+								<tr>
+									<td colspan="5" style="text-align: center; padding: 48px"><div class="spinner"></div></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<script type="module">
+			import { requireAuth, renderAdminUser } from '/src/js/auth.js';
+			import { supabase } from '/src/lib/supabase.js';
+			import { formatDate } from '/src/js/utils.js';
+
+			await requireAuth();
+			await renderAdminUser();
+
+			let allUsers = [];
+
+			async function loadUsers() {
+				// author_email로 집계
+				const { data, error } = await supabase.from('posts').select('author_name, author_email, author_phone, created_at').order('created_at', { ascending: false });
+
+				if (error || !data?.length) {
+					document.getElementById('users-list').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-light)">데이터가 없습니다.</td></tr>';
+					return;
+				}
+
+				// 이메일 기준으로 그룹핑
+				const grouped = {};
+				data.forEach(row => {
+					const key = row.author_email || row.author_name || '알 수 없음';
+					if (!grouped[key]) {
+						grouped[key] = { name: row.author_name, email: row.author_email, phone: row.author_phone, count: 0, latest: row.created_at };
+					}
+					grouped[key].count++;
+				});
+
+				allUsers = Object.values(grouped).sort((a, b) => new Date(b.latest) - new Date(a.latest));
+				renderTable(allUsers);
+			}
+
+			function renderTable(users) {
+				const tbody = document.getElementById('users-list');
+				if (!users.length) {
+					tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-light)">결과가 없습니다.</td></tr>';
+					return;
+				}
+				tbody.innerHTML = users
+					.map(
+						u => `
+      <tr>
+        <td style="font-weight:500">${u.name || '-'}</td>
+        <td>${u.email || '-'}</td>
+        <td>${u.phone || '-'}</td>
+        <td><span class="badge badge-blue">${u.count}건</span></td>
+        <td>${formatDate(u.latest)}</td>
+      </tr>
+    `
+					)
+					.join('');
+			}
+
+			document.getElementById('search-input').addEventListener('input', e => {
+				const q = e.target.value.toLowerCase();
+				renderTable(allUsers.filter(u => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)));
+			});
+
+			document.getElementById('export-btn').addEventListener('click', () => {
+				const headers = ['이름', '이메일', '연락처', '참여횟수', '최근참여'];
+				const rows = allUsers.map(u => [u.name, u.email, u.phone, u.count, formatDate(u.latest)]);
+				const csv = [headers, ...rows].map(r => r.map(v => `"${v ?? ''}"`).join(',')).join('\n');
+				const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = 'users.csv';
+				a.click();
+			});
+
+			loadUsers();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>프로그램 - DGE Book Life</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+	</head>
+	<body class="page-body">
+		<header class="site-header">
+			<div class="container header-inner">
+				<a href="/" class="site-logo">DGE Book Life</a>
+				<nav class="main-nav">
+					<div class="nav-item">
+						내 손의 책
+						<div class="nav-dropdown">
+							<a href="/pages/book/campaign.html">캠페인 소개</a>
+							<a href="/pages/book/archive-2025.html">2025 아카이브</a>
+							<a href="/pages/book/download.html">다운로드 자료</a>
+						</div>
+					</div>
+					<div class="nav-item active">
+						내 삶의 힘
+						<div class="nav-dropdown">
+							<a href="/pages/life/program.html">프로그램</a>
+							<a href="/pages/life/event.html">이벤트</a>
+							<a href="/pages/life/contest.html">공모전</a>
+						</div>
+					</div>
+					<a class="nav-item" href="/pages/board/index.html">게시판</a>
+				</nav>
+			</div>
+		</header>
+
+		<!-- Hero -->
+		<section style="background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 80px 0 60px">
+			<div class="container" style="text-align: center">
+				<span style="display: inline-block; background: rgba(255, 255, 255, 0.2); padding: 4px 16px; border-radius: 20px; font-size: 0.875rem; margin-bottom: 16px">내 삶의 힘</span>
+				<h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 12px">프로그램</h1>
+				<p style="opacity: 0.9">독서문화진흥 프로그램에 참여하세요</p>
+			</div>
+		</section>
+
+		<!-- 필터 -->
+		<section class="section-sm">
+			<div class="container">
+				<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px">
+					<button class="btn btn-primary btn-sm filter-btn" data-status="">전체</button>
+					<button class="btn btn-outline btn-sm filter-btn" data-status="upcoming">예정</button>
+					<button class="btn btn-outline btn-sm filter-btn" data-status="ongoing">진행중</button>
+					<button class="btn btn-outline btn-sm filter-btn" data-status="ended">종료</button>
+				</div>
+				<div class="gallery-grid" id="programs-grid">
+					<div style="grid-column: 1/-1; text-align: center"><div class="spinner"></div></div>
+				</div>
+				<div id="pagination-wrap"></div>
+			</div>
+		</section>
+
+		<footer class="site-footer">
+			<div class="container">
+				<div class="footer-bottom"><p>© 2025 DGE Book Life. All rights reserved.</p></div>
+			</div>
+		</footer>
+
+		<script type="module">
+			import { getPrograms } from '/src/lib/supabase.js';
+			import { formatDate, truncate, renderPagination } from '/src/js/utils.js';
+
+			let currentPage = 1;
+			let currentStatus = '';
+
+			const statusColor = { upcoming: 'badge-blue', ongoing: 'badge-green', ended: 'badge-gray' };
+			const statusLabel = { upcoming: '예정', ongoing: '진행중', ended: '종료' };
+
+			async function load() {
+				const grid = document.getElementById('programs-grid');
+				grid.innerHTML = '<div style="grid-column:1/-1;text-align:center"><div class="spinner"></div></div>';
+				const { data, count, error } = await getPrograms({ status: currentStatus || undefined, page: currentPage, limit: 9 });
+				if (error || !data?.length) {
+					grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-light);padding:48px">프로그램이 없습니다.</div>';
+					return;
+				}
+				grid.innerHTML = data
+					.map(
+						p => `
+        <div class="card">
+          <img class="card-img" src="${p.thumbnail_url || '/placeholder.svg'}" alt="${p.title}" onerror="this.src='/placeholder.svg'" />
+          <div class="card-body">
+            <span class="badge ${statusColor[p.status] || 'badge-gray'}" style="margin-bottom:8px">${statusLabel[p.status] || p.status}</span>
+            <div class="card-title">${truncate(p.title, 50)}</div>
+            <div class="card-desc">${truncate(p.description, 80)}</div>
+            <div class="card-meta">
+              ${p.date_start ? `<span>📅 ${formatDate(p.date_start)}</span>` : ''}
+              ${p.location ? `<span>📍 ${p.location}</span>` : ''}
+              ${p.capacity ? `<span>👥 ${p.capacity}명</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `
+					)
+					.join('');
+
+				renderPagination('pagination-wrap', {
+					current: currentPage,
+					total: count,
+					perPage: 9,
+					onChange: p => {
+						currentPage = p;
+						load();
+					},
+				});
+			}
+
+			document.querySelectorAll('.filter-btn').forEach(btn => {
+				btn.onclick = () => {
+					document.querySelectorAll('.filter-btn').forEach(b => {
+						b.className = 'btn btn-outline btn-sm filter-btn';
+					});
+					btn.className = 'btn btn-primary btn-sm filter-btn';
+					currentStatus = btn.dataset.status;
+					currentPage = 1;
+					load();
+				};
+			});
+
+			load();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>대시보드 - DGE 관리자</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+		<link rel="stylesheet" href="/src/css/admin.css" />
+	</head>
+	<body>
+		<div class="admin-layout">
+			<!-- ── Sidebar ────────────────────────────────────────── -->
+			<aside class="sidebar" id="sidebar">
+				<div class="sidebar-logo">📚 <span>DGE</span> 관리자</div>
+				<nav class="sidebar-nav">
+					<div class="sidebar-section">대시보드</div>
+					<a class="sidebar-link active" href="/admin/index.html">🏠 대시보드</a>
+
+					<div class="sidebar-section" style="margin-top: 16px">콘텐츠</div>
+					<a class="sidebar-link" href="/admin/programs.html">🎓 프로그램 관리</a>
+					<a class="sidebar-link" href="/admin/events.html">🎉 이벤트 관리</a>
+					<a class="sidebar-link" href="/admin/posts.html">📋 게시글 관리</a>
+
+					<div class="sidebar-section" style="margin-top: 16px">관리</div>
+					<a class="sidebar-link" href="/admin/users.html">👤 사용자 관리</a>
+					<a class="sidebar-link" href="/" target="_blank">🌐 사이트 보기</a>
+				</nav>
+				<div class="sidebar-footer">
+					<div class="admin-user">
+						<div class="user-avatar"><span></span></div>
+						<div class="user-info">
+							<div class="name">관리자</div>
+							<div class="role user-email"></div>
+						</div>
+					</div>
+					<button data-action="signout" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 12px">로그아웃</button>
+				</div>
+			</aside>
+
+			<!-- ── Main ───────────────────────────────────────────── -->
+			<main class="admin-main">
+				<div class="admin-topbar">
+					<span class="topbar-title">📊 대시보드</span>
+					<div class="topbar-actions">
+						<a href="/pages/life/program.html" class="btn btn-primary btn-sm" target="_blank">사이트 방문</a>
+					</div>
+				</div>
+
+				<div class="admin-content">
+					<!-- 통계 카드 -->
+					<div class="stats-grid">
+						<div class="stat-card">
+							<div class="stat-icon" style="background: #dbeafe">🎓</div>
+							<div class="stat-info">
+								<div class="value" id="stat-programs">-</div>
+								<div class="label">전체 프로그램</div>
+							</div>
+						</div>
+						<div class="stat-card">
+							<div class="stat-icon" style="background: #d1fae5">🎉</div>
+							<div class="stat-info">
+								<div class="value" id="stat-events">-</div>
+								<div class="label">전체 이벤트</div>
+							</div>
+						</div>
+						<div class="stat-card">
+							<div class="stat-icon" style="background: #fef3c7">📋</div>
+							<div class="stat-info">
+								<div class="value" id="stat-posts">-</div>
+								<div class="label">전체 게시글</div>
+							</div>
+						</div>
+						<div class="stat-card">
+							<div class="stat-icon" style="background: #fee2e2">⏳</div>
+							<div class="stat-info">
+								<div class="value" id="stat-pending">-</div>
+								<div class="label">검토 대기</div>
+								<div class="change change-up" id="stat-pending-label"></div>
+							</div>
+						</div>
+					</div>
+
+					<!-- 최근 게시글 -->
+					<div class="admin-table-wrap">
+						<div class="table-header">
+							<span class="table-title">최근 게시글</span>
+							<a href="/admin/posts.html" class="btn btn-outline btn-sm">전체 보기</a>
+						</div>
+						<table class="admin-table">
+							<thead>
+								<tr>
+									<th>제목</th>
+									<th>카테고리</th>
+									<th>작성자</th>
+									<th>상태</th>
+									<th>날짜</th>
+									<th>관리</th>
+								</tr>
+							</thead>
+							<tbody id="recent-posts">
+								<tr>
+									<td colspan="6" style="text-align: center; padding: 32px; color: var(--text-light)">로딩 중...</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<script type="module">
+			import { requireAuth, renderAdminUser } from '/src/js/auth.js';
+			import { supabase } from '/src/lib/supabase.js';
+			import { formatDate, truncate } from '/src/js/utils.js';
+
+			await requireAuth();
+			await renderAdminUser();
+
+			// 통계 로드
+			async function loadStats() {
+				const [programs, events, posts, pending] = await Promise.all([
+					supabase.from('programs').select('*', { count: 'exact', head: true }),
+					supabase.from('events').select('*', { count: 'exact', head: true }),
+					supabase.from('posts').select('*', { count: 'exact', head: true }),
+					supabase.from('posts').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+				]);
+				document.getElementById('stat-programs').textContent = programs.count ?? 0;
+				document.getElementById('stat-events').textContent = events.count ?? 0;
+				document.getElementById('stat-posts').textContent = posts.count ?? 0;
+				document.getElementById('stat-pending').textContent = pending.count ?? 0;
+				if (pending.count > 0) document.getElementById('stat-pending-label').textContent = `${pending.count}건 검토 필요`;
+			}
+
+			// 최근 게시글
+			async function loadRecentPosts() {
+				const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(8);
+				const tbody = document.getElementById('recent-posts');
+				if (error || !data?.length) {
+					tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-light)">게시글이 없습니다.</td></tr>';
+					return;
+				}
+				const statusMap = { pending: ['badge-yellow', '검토중'], approved: ['badge-green', '승인'], rejected: ['badge-red', '반려'] };
+				tbody.innerHTML = data
+					.map(p => {
+						const [cls, label] = statusMap[p.status] || ['badge-gray', p.status];
+						return `<tr>
+        <td>${truncate(p.title, 40)}</td>
+        <td><span class="badge badge-blue">${p.category}</span></td>
+        <td>${p.author_name || '-'}</td>
+        <td><span class="badge ${cls}">${label}</span></td>
+        <td>${formatDate(p.created_at)}</td>
+        <td><div class="table-actions">
+          <button class="icon-btn" onclick="approvePost('${p.id}')">✅</button>
+          <button class="icon-btn danger" onclick="deletePost('${p.id}')">🗑</button>
+        </div></td>
+      </tr>`;
+					})
+					.join('');
+			}
+
+			window.approvePost = async id => {
+				await supabase.from('posts').update({ status: 'approved' }).eq('id', id);
+				loadRecentPosts();
+				loadStats();
+			};
+			window.deletePost = async id => {
+				if (!confirm('삭제하시겠습니까?')) return;
+				await supabase.from('posts').delete().eq('id', id);
+				loadRecentPosts();
+				loadStats();
+			};
+
+			loadStats();
+			loadRecentPosts();
+		</script>
+	</body>
+</html>

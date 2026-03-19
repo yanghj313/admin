@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>관리자 로그인 - DGE Book Life</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+		<style>
+			body {
+				background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.login-card {
+				background: white;
+				border-radius: var(--radius-lg);
+				padding: 48px 40px;
+				width: 100%;
+				max-width: 420px;
+				box-shadow: var(--shadow-lg);
+			}
+			.login-logo {
+				text-align: center;
+				margin-bottom: 32px;
+			}
+			.login-logo h1 {
+				font-size: 1.5rem;
+				font-weight: 800;
+				color: var(--primary);
+				margin-top: 12px;
+			}
+			.login-logo p {
+				font-size: 0.875rem;
+				color: var(--text-light);
+				margin-top: 4px;
+			}
+			.login-form .form-group {
+				margin-bottom: 16px;
+			}
+			.login-form label {
+				display: block;
+				font-size: 0.875rem;
+				font-weight: 600;
+				color: var(--text-dark);
+				margin-bottom: 6px;
+			}
+			.login-form input {
+				width: 100%;
+				padding: 12px 14px;
+				border: 1.5px solid var(--border);
+				border-radius: var(--radius-md);
+				font-size: 1rem;
+				color: var(--text-dark);
+				outline: none;
+				transition: border-color 0.2s;
+				box-sizing: border-box;
+			}
+			.login-form input:focus {
+				border-color: var(--accent);
+			}
+			.login-btn {
+				width: 100%;
+				padding: 14px;
+				background: var(--primary);
+				border: none;
+				border-radius: var(--radius-md);
+				font-size: 1rem;
+				font-weight: 700;
+				color: white;
+				cursor: pointer;
+				transition: background 0.2s;
+				margin-top: 8px;
+			}
+			.login-btn:hover {
+				background: var(--accent);
+			}
+			.login-btn:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+			.login-note {
+				text-align: center;
+				font-size: 0.8rem;
+				color: var(--text-light);
+				margin-top: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="login-card">
+			<div class="login-logo">
+				<div style="font-size: 2.5rem">📚</div>
+				<h1>DGE Book Life</h1>
+				<p>관리자 페이지에 로그인하세요</p>
+			</div>
+
+			<form class="login-form" id="login-form" autocomplete="off">
+				<div class="form-group">
+					<label for="login-email">이메일</label>
+					<input type="email" id="login-email" placeholder="admin@example.com" required autocomplete="username" />
+				</div>
+				<div class="form-group">
+					<label for="login-password">비밀번호</label>
+					<input type="password" id="login-password" placeholder="비밀번호 입력" required autocomplete="current-password" />
+				</div>
+				<button type="submit" class="login-btn" id="login-btn">로그인</button>
+			</form>
+
+			<p class="login-note">승인된 관리자 계정만 접근 가능합니다.</p>
+			<div id="login-error" style="display: none; color: #ef4444; text-align: center; font-size: 0.875rem; margin-top: 12px"></div>
+		</div>
+
+		<script type="module">
+			import { signInWithEmail, getSession } from '/src/lib/supabase.js';
+
+			// 이미 로그인된 경우 대시보드로
+			getSession().then(session => {
+				if (session) window.location.href = '/admin/index.html';
+			});
+
+			document.getElementById('login-form').addEventListener('submit', async e => {
+				e.preventDefault();
+				const btn = document.getElementById('login-btn');
+				const errEl = document.getElementById('login-error');
+				const email = document.getElementById('login-email').value.trim();
+				const password = document.getElementById('login-password').value;
+
+				btn.disabled = true;
+				btn.textContent = '로그인 중...';
+				errEl.style.display = 'none';
+
+				const { error } = await signInWithEmail(email, password);
+				if (error) {
+					errEl.style.display = 'block';
+					errEl.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+					btn.disabled = false;
+					btn.textContent = '로그인';
+				} else {
+					window.location.href = '/admin/index.html';
+				}
+			});
+		</script>
+	</body>
+</html>

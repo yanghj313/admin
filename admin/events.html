@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>이벤트 관리 - DGE 관리자</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+		<link rel="stylesheet" href="/src/css/admin.css" />
+	</head>
+	<body>
+		<div class="admin-layout">
+			<aside class="sidebar">
+				<div class="sidebar-logo">📚 <span>DGE</span> 관리자</div>
+				<nav class="sidebar-nav">
+					<a class="sidebar-link" href="/admin/index.html">🏠 대시보드</a>
+					<a class="sidebar-link" href="/admin/programs.html">🎓 프로그램 관리</a>
+					<a class="sidebar-link active" href="/admin/events.html">🎉 이벤트 관리</a>
+					<a class="sidebar-link" href="/admin/posts.html">📋 게시글 관리</a>
+					<a class="sidebar-link" href="/admin/users.html">👤 사용자 관리</a>
+				</nav>
+				<div class="sidebar-footer">
+					<button data-action="signout" class="btn btn-outline btn-sm" style="width: 100%">로그아웃</button>
+				</div>
+			</aside>
+			<main class="admin-main">
+				<div class="admin-topbar">
+					<span class="topbar-title">🎉 이벤트 관리</span>
+					<div class="topbar-actions">
+						<button class="btn btn-primary btn-sm" id="btn-add">＋ 이벤트 추가</button>
+					</div>
+				</div>
+				<div class="admin-content">
+					<div class="gallery-grid" id="events-grid">
+						<div style="grid-column: 1/-1; text-align: center"><div class="spinner"></div></div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<div class="modal-overlay" id="event-modal">
+			<div class="modal" style="max-width: 560px">
+				<div class="modal-header">
+					<h3 class="modal-title" id="modal-title">이벤트 추가</h3>
+					<button class="modal-close" id="modal-close">✕</button>
+				</div>
+				<form id="event-form">
+					<input type="hidden" id="edit-id" />
+					<div class="form-group">
+						<label class="form-label">제목 <span class="required">*</span></label>
+						<input type="text" class="form-input" id="f-title" required />
+					</div>
+					<div class="form-group">
+						<label class="form-label">설명</label>
+						<textarea class="form-textarea" id="f-desc" style="min-height: 100px"></textarea>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+						<div class="form-group">
+							<label class="form-label">시작일</label>
+							<input type="date" class="form-input" id="f-start" />
+						</div>
+						<div class="form-group">
+							<label class="form-label">종료일</label>
+							<input type="date" class="form-input" id="f-end" />
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="form-label">썸네일 URL</label>
+						<input type="url" class="form-input" id="f-thumb" placeholder="https://..." />
+					</div>
+					<div class="form-group" style="display: flex; align-items: center; gap: 8px">
+						<input type="checkbox" id="f-active" style="width: 16px; height: 16px" />
+						<label for="f-active" class="form-label" style="margin: 0">진행 중</label>
+					</div>
+					<div style="display: flex; gap: 10px; justify-content: flex-end">
+						<button type="button" class="btn btn-outline btn-sm" id="btn-cancel">취소</button>
+						<button type="submit" class="btn btn-primary btn-sm">저장</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<script type="module">
+			import { requireAuth, renderAdminUser } from '/src/js/auth.js';
+			import { supabase } from '/src/lib/supabase.js';
+			import { formatDate, truncate, showToast } from '/src/js/utils.js';
+
+			await requireAuth();
+			await renderAdminUser();
+
+			async function loadEvents() {
+				const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+				const grid = document.getElementById('events-grid');
+				if (error || !data?.length) {
+					grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-light);padding:48px">이벤트가 없습니다.</div>';
+					return;
+				}
+				grid.innerHTML = data
+					.map(
+						e => `
+      <div class="card">
+        <img class="card-img" src="${e.thumbnail_url || '/placeholder.svg'}" alt="${e.title}" onerror="this.src='/placeholder.svg'" />
+        <div class="card-body">
+          <span class="badge ${e.is_active ? 'badge-green' : 'badge-gray'}" style="margin-bottom:8px">${e.is_active ? '진행중' : '종료'}</span>
+          <div class="card-title">${truncate(e.title, 50)}</div>
+          <div class="card-desc">${truncate(e.description, 80)}</div>
+          <div class="card-meta">
+            ${e.date_start ? `<span>📅 ${formatDate(e.date_start)} ~ ${formatDate(e.date_end)}</span>` : ''}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-outline btn-sm" onclick="editEvent('${e.id}')">수정</button>
+            <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none" onclick="deleteEvent('${e.id}')">삭제</button>
+          </div>
+        </div>
+      </div>
+    `
+					)
+					.join('');
+			}
+
+			window.editEvent = async id => {
+				const { data } = await supabase.from('events').select('*').eq('id', id).single();
+				if (!data) return;
+				document.getElementById('modal-title').textContent = '이벤트 수정';
+				document.getElementById('edit-id').value = id;
+				document.getElementById('f-title').value = data.title || '';
+				document.getElementById('f-desc').value = data.description || '';
+				document.getElementById('f-start').value = data.date_start || '';
+				document.getElementById('f-end').value = data.date_end || '';
+				document.getElementById('f-thumb').value = data.thumbnail_url || '';
+				document.getElementById('f-active').checked = !!data.is_active;
+				document.getElementById('event-modal').classList.add('open');
+			};
+
+			window.deleteEvent = async id => {
+				if (!confirm('삭제하시겠습니까?')) return;
+				await supabase.from('events').delete().eq('id', id);
+				showToast('삭제되었습니다.', 'info');
+				loadEvents();
+			};
+
+			document.getElementById('btn-add').onclick = () => {
+				document.getElementById('event-form').reset();
+				document.getElementById('edit-id').value = '';
+				document.getElementById('modal-title').textContent = '이벤트 추가';
+				document.getElementById('event-modal').classList.add('open');
+			};
+			document.getElementById('modal-close').onclick = () => document.getElementById('event-modal').classList.remove('open');
+			document.getElementById('btn-cancel').onclick = () => document.getElementById('event-modal').classList.remove('open');
+
+			document.getElementById('event-form').onsubmit = async e => {
+				e.preventDefault();
+				const id = document.getElementById('edit-id').value;
+				const payload = {
+					title: document.getElementById('f-title').value,
+					description: document.getElementById('f-desc').value,
+					date_start: document.getElementById('f-start').value || null,
+					date_end: document.getElementById('f-end').value || null,
+					thumbnail_url: document.getElementById('f-thumb').value,
+					is_active: document.getElementById('f-active').checked,
+				};
+				if (id) {
+					await supabase.from('events').update(payload).eq('id', id);
+					showToast('수정되었습니다.', 'success');
+				} else {
+					await supabase.from('events').insert([payload]);
+					showToast('등록되었습니다.', 'success');
+				}
+				document.getElementById('event-modal').classList.remove('open');
+				loadEvents();
+			};
+
+			loadEvents();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>글쓰기 - DGE Book Life</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+	</head>
+	<body class="page-body">
+		<header class="site-header">
+			<div class="container header-inner">
+				<a href="/" class="site-logo">DGE Book Life</a>
+				<nav class="main-nav">
+					<a class="nav-item" href="/pages/board/index.html">← 게시판으로</a>
+				</nav>
+			</div>
+		</header>
+
+		<section class="section-sm">
+			<div class="container" style="max-width: 720px">
+				<div style="margin-bottom: 28px">
+					<h1 style="font-size: 1.75rem; font-weight: 800; color: var(--primary)">참여 신청 / 글쓰기</h1>
+					<p style="color: var(--text-light); margin-top: 6px">아래 양식을 작성해 캠페인에 참여해 주세요.</p>
+				</div>
+
+				<div style="background: white; border-radius: var(--radius-lg); padding: 36px; box-shadow: var(--shadow-md)">
+					<form id="write-form" novalidate>
+						<!-- 카테고리 선택 -->
+						<div class="form-group">
+							<label class="form-label">참여 유형 <span class="required">*</span></label>
+							<select class="form-select" id="f-category" required>
+								<option value="">선택해 주세요</option>
+								<option value="board">일반 게시글</option>
+								<option value="contest">공모전 참여</option>
+								<option value="archive">아카이브 활동</option>
+							</select>
+						</div>
+
+					<!-- 세부 카테고리 (archive/contest 선택 시 표시) -->
+						<div class="form-group" id="sub-category-wrap" style="display: none">
+							<label class="form-label">세부 유형</label>
+							<select class="form-select" id="f-sub-category">
+								<option value="">선택해 주세요</option>
+								<option value="인생책">📚 인생 책 공유</option>
+								<option value="북끈챌린지">📖 북끈 챌린지</option>
+								<option value="인증샷">📸 인증샷 챌린지</option>
+								<option value="공모전">🏆 내만내책 공모전</option>
+							</select>
+						</div>
+
+						<!-- SNS ID (북끈챌린지 전용) -->
+						<div class="form-group" id="sns-wrap" style="display: none">
+							<label class="form-label">인스타그램 / 페이스북 ID <span class="required">*</span></label>
+							<input type="text" class="form-input" id="f-sns" placeholder="@username" />
+								<span class="form-hint">북끈챌린지 참여 인증 SNS 계정을 입력해 주세요.</span>
+						</div>
+
+						<!-- 개인정보 섹션 -->
+						<div style="border-top: 1px solid var(--border); padding-top: 24px; margin-top: 8px; margin-bottom: 24px">
+							<h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-mid); margin-bottom: 16px">📌 참여자 정보</h3>
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+								<div class="form-group">
+									<label class="form-label">이름 <span class="required">*</span></label>
+									<input type="text" class="form-input" id="f-name" placeholder="홍길동" required />
+								</div>
+								<div class="form-group">
+									<label class="form-label">연락처 <span class="required">*</span></label>
+									<input type="tel" class="form-input" id="f-phone" placeholder="010-0000-0000" required />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="form-label">이메일 <span class="required">*</span></label>
+								<input type="email" class="form-input" id="f-email" placeholder="example@email.com" required />
+								<span class="form-hint">결과 안내 및 수상 연락에 사용됩니다.</span>
+							</div>
+							<div class="form-group">
+								<label class="form-label">소속/학교 (선택)</label>
+								<input type="text" class="form-input" id="f-org" placeholder="○○대학교 / ○○기관" />
+							</div>
+						</div>
+
+						<!-- 게시글 내용 -->
+						<div style="border-top: 1px solid var(--border); padding-top: 24px; margin-bottom: 8px">
+							<h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-mid); margin-bottom: 16px">📝 참여 내용</h3>
+						</div>
+						<div class="form-group">
+							<label class="form-label">제목 <span class="required">*</span></label>
+							<input type="text" class="form-input" id="f-title" placeholder="제목을 입력해 주세요" required />
+						</div>
+						<div class="form-group">
+							<label class="form-label">내용 <span class="required">*</span></label>
+							<textarea class="form-textarea" id="f-content" placeholder="내용을 입력해 주세요 (최소 20자)" style="min-height: 200px" required></textarea>
+							<span class="form-hint" id="content-count">0자</span>
+						</div>
+
+						<!-- 파일 첨부 -->
+						<div class="form-group">
+							<label class="form-label">이미지 첨부 (최대 3장)</label>
+							<div class="file-upload" id="file-drop-area" onclick="document.getElementById('f-images').click()">
+								<input type="file" id="f-images" accept="image/*" multiple />
+								<div style="font-size: 1.5rem; margin-bottom: 8px">📷</div>
+								<div style="font-size: 0.875rem; color: var(--text-light)">클릭하거나 이미지를 여기에 끌어다 놓으세요</div>
+								<div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px">JPG, PNG, GIF (최대 5MB)</div>
+							</div>
+							<div id="image-preview" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px"></div>
+						</div>
+
+						<!-- 개인정보 동의 -->
+						<div style="background: var(--accent-light); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 24px; font-size: 0.875rem; color: var(--text-mid)">
+							<div style="font-weight: 600; margin-bottom: 8px">개인정보 수집 및 이용 동의</div>
+							<div style="line-height: 1.7">
+								수집 항목: 이름, 연락처, 이메일<br />
+								수집 목적: 캠페인 참여 확인 및 결과 안내<br />
+								보유 기간: 캠페인 종료 후 1년
+							</div>
+							<label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer">
+								<input type="checkbox" id="f-agree" required style="width: 16px; height: 16px" />
+								<span style="font-weight: 600">개인정보 수집 및 이용에 동의합니다 <span class="required">*</span></span>
+							</label>
+						</div>
+
+						<!-- 버튼 -->
+						<div style="display: flex; gap: 12px; justify-content: flex-end">
+							<a href="/pages/board/index.html" class="btn btn-outline">취소</a>
+							<button type="submit" class="btn btn-primary" id="submit-btn">📤 제출하기</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</section>
+
+		<footer class="site-footer">
+			<div class="container">
+				<div class="footer-bottom"><p>© 2025 DGE Book Life. All rights reserved.</p></div>
+			</div>
+		</footer>
+
+		<script type="module">
+			import { supabase, createPost } from '/src/lib/supabase.js';
+			import { showToast, uploadFile } from '/src/js/utils.js';
+
+			// ── URL 파라미터 자동 선택 ─────────────────────────────────
+			const params = new URLSearchParams(location.search);
+			const pCat = params.get('category');   // 'archive' | 'contest' | 'board'
+				const pSub = params.get('sub');        // '북끈챌린지' | '인생책' | '인증샷' | '공모전'
+			if (pCat) document.getElementById('f-category').value = pCat;
+
+			// ── 동적 필드 제어 ────────────────────────────────────────
+			function applyDynamicFields(cat, sub) {
+				// 세부 유형 선택창
+				const subWrap = document.getElementById('sub-category-wrap');
+				subWrap.style.display = ['contest', 'archive'].includes(cat) ? 'block' : 'none';
+
+					// SNS ID (북끈챌린지 전용)
+					const snsWrap = document.getElementById('sns-wrap');
+					const snsInput = document.getElementById('f-sns');
+					const showSns = sub === '북끈챌린지';
+				snsWrap.style.display = showSns ? 'block' : 'none';
+				snsInput.required = showSns;
+
+				// 연락처 필수 여부 (챌린지/공모전은 필수)
+				const phoneInput = document.getElementById('f-phone');
+					const phoneRequired = ['북끈챌린지', '인증샷', '공모전'].includes(sub);
+				phoneInput.required = phoneRequired;
+				phoneInput.closest('.form-group').querySelector('.form-label').innerHTML =
+					`연락처 ${phoneRequired ? '<span class="required">*</span>' : '<span style="font-weight:400;color:var(--text-light)">(선택)</span>'}`;
+
+				// 소속 필수 여부 (공모전은 필수)
+				const orgInput = document.getElementById('f-org');
+				const orgRequired = sub === '공모전';
+				orgInput.required = orgRequired;
+				orgInput.closest('.form-group').querySelector('.form-label').innerHTML =
+					`소속/학교 ${orgRequired ? '<span class="required">*</span>' : '<span style="font-weight:400;color:var(--text-light)">(선택)</span>'}`;
+			}
+
+			// 초기 적용 (URL 파라미터 포함)
+			if (pSub) document.getElementById('f-sub-category').value = pSub;
+			applyDynamicFields(pCat || '', pSub || '');
+
+			document.getElementById('f-category').addEventListener('change', e => {
+				applyDynamicFields(e.target.value, document.getElementById('f-sub-category').value);
+			});
+			document.getElementById('f-sub-category').addEventListener('change', e => {
+				applyDynamicFields(document.getElementById('f-category').value, e.target.value);
+			});
+
+			// 내용 글자수
+			document.getElementById('f-content').addEventListener('input', e => {
+				document.getElementById('content-count').textContent = `${e.target.value.length}자`;
+			});
+
+			// 이미지 미리보기
+			document.getElementById('f-images').addEventListener('change', e => {
+				const preview = document.getElementById('image-preview');
+				preview.innerHTML = '';
+				const files = Array.from(e.target.files).slice(0, 3);
+				files.forEach(file => {
+					const url = URL.createObjectURL(file);
+					const img = document.createElement('img');
+					img.src = url;
+					img.style = 'width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border)';
+					preview.appendChild(img);
+				});
+			});
+
+			// 드래그앤드롭
+			const dropArea = document.getElementById('file-drop-area');
+			dropArea.addEventListener('dragover', e => {
+				e.preventDefault();
+				dropArea.style.borderColor = 'var(--accent)';
+			});
+			dropArea.addEventListener('dragleave', () => {
+				dropArea.style.borderColor = 'var(--border)';
+			});
+			dropArea.addEventListener('drop', e => {
+				e.preventDefault();
+				dropArea.style.borderColor = 'var(--border)';
+				document.getElementById('f-images').files = e.dataTransfer.files;
+				document.getElementById('f-images').dispatchEvent(new Event('change'));
+			});
+
+			// ── 폼 제출 ──────────────────────────────────────────────
+			document.getElementById('write-form').addEventListener('submit', async e => {
+				e.preventDefault();
+				const btn = document.getElementById('submit-btn');
+
+				if (!document.getElementById('f-agree').checked) {
+					showToast('개인정보 수집에 동의해 주세요.', 'error');
+					return;
+				}
+
+				const content = document.getElementById('f-content').value.trim();
+				if (content.length < 20) {
+					showToast('내용을 최소 20자 이상 입력해 주세요.', 'error');
+					return;
+				}
+
+				const sub = document.getElementById('f-sub-category').value;
+				const sns = document.getElementById('f-sns').value.trim();
+				if (sub === '북끈챌린지' && !sns) {
+					showToast('SNS 아이디를 입력해 주세요.', 'error');
+					return;
+				}
+
+				btn.disabled = true;
+				btn.textContent = '제출 중...';
+
+				try {
+					// 이미지 업로드
+					const files = Array.from(document.getElementById('f-images').files).slice(0, 3);
+					const imageUrls = [];
+					for (const file of files) {
+						const url = await uploadFile(supabase, file, 'post-images');
+						imageUrls.push(url);
+					}
+
+					const { error } = await createPost({
+						category:     document.getElementById('f-category').value,
+						sub_category: sub || null,
+						title:        document.getElementById('f-title').value.trim(),
+						content,
+						author_name:  document.getElementById('f-name').value.trim(),
+						author_email: document.getElementById('f-email').value.trim(),
+						author_phone: document.getElementById('f-phone').value.trim() || null,
+						author_org:   document.getElementById('f-org').value.trim() || null,
+						sns_id:       sns || null,
+						images:       imageUrls.length ? imageUrls : [],
+						status:       'pending',
+					});
+
+					if (error) throw error;
+
+					showToast('제출되었습니다! 검토 후 게시됩니다.', 'success');
+					setTimeout(() => (window.location.href = '/pages/board/index.html'), 1500);
+				} catch (err) {
+					showToast('오류가 발생했습니다: ' + err.message, 'error');
+					btn.disabled = false;
+					btn.textContent = '📤 제출하기';
+				}
+			});
+		</script>
+	</body>
+</html>

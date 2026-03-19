@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>게시글 관리 - DGE 관리자</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+		<link rel="stylesheet" href="/src/css/admin.css" />
+	</head>
+	<body>
+		<div class="admin-layout">
+			<!-- Sidebar (공통) -->
+			<aside class="sidebar">
+				<div class="sidebar-logo">📚 <span>DGE</span> 관리자</div>
+				<nav class="sidebar-nav">
+					<a class="sidebar-link" href="/admin/index.html">🏠 대시보드</a>
+					<a class="sidebar-link" href="/admin/programs.html">🎓 프로그램 관리</a>
+					<a class="sidebar-link" href="/admin/events.html">🎉 이벤트 관리</a>
+					<a class="sidebar-link active" href="/admin/posts.html">📋 게시글 관리</a>
+					<a class="sidebar-link" href="/admin/users.html">👤 사용자 관리</a>
+				</nav>
+				<div class="sidebar-footer">
+					<button data-action="signout" class="btn btn-outline btn-sm" style="width: 100%">로그아웃</button>
+				</div>
+			</aside>
+
+			<main class="admin-main">
+				<div class="admin-topbar">
+					<span class="topbar-title">📋 게시글 관리</span>
+					<div class="topbar-actions">
+						<button class="btn btn-primary btn-sm" id="btn-add-post">＋ 게시글 추가</button>
+					</div>
+				</div>
+				<div class="admin-content">
+					<div class="admin-table-wrap">
+						<div class="table-header">
+							<span class="table-title">전체 게시글</span>
+							<div class="table-filters">
+								<select class="form-select" id="filter-category" style="width: 140px">
+									<option value="">전체 카테고리</option>
+									<option value="contest">공모전</option>
+									<option value="board">게시판</option>
+									<option value="archive">아카이브</option>
+								</select>
+								<select class="form-select" id="filter-status" style="width: 120px">
+									<option value="">전체 상태</option>
+									<option value="pending">검토중</option>
+									<option value="approved">승인</option>
+									<option value="rejected">반려</option>
+								</select>
+								<input type="text" class="search-input" id="search-input" placeholder="제목, 작성자 검색..." />
+								<button class="btn btn-primary btn-sm" id="search-btn">검색</button>
+							</div>
+						</div>
+						<table class="admin-table">
+							<thead>
+								<tr>
+									<th>제목</th>
+									<th>카테고리</th>
+									<th>작성자</th>
+									<th>연락처</th>
+									<th>상태</th>
+									<th>날짜</th>
+									<th>관리</th>
+								</tr>
+							</thead>
+							<tbody id="posts-list">
+								<tr>
+									<td colspan="7" style="text-align: center; padding: 48px"><div class="spinner"></div></td>
+								</tr>
+							</tbody>
+						</table>
+						<div id="pagination-wrap"></div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<!-- 게시글 추가 Modal -->
+		<div class="modal-overlay" id="add-post-modal">
+			<div class="modal" style="max-width: 640px">
+				<div class="modal-header">
+					<h3 class="modal-title">게시글 추가</h3>
+					<button class="modal-close" id="add-modal-close">✕</button>
+				</div>
+				<form id="add-post-form">
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+						<div class="form-group">
+							<label class="form-label">카테고리 <span class="required">*</span></label>
+							<select class="form-select" id="add-category" required>
+								<option value="board">게시판</option>
+								<option value="contest">공모전</option>
+								<option value="archive">아카이브</option>
+								<option value="download">다운로드</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label class="form-label">세부 카테고리</label>
+							<input type="text" class="form-input" id="add-sub-category" placeholder="예: 인생책, 북끈챌린지" />
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="form-label">제목 <span class="required">*</span></label>
+						<input type="text" class="form-input" id="add-title" required />
+					</div>
+					<div class="form-group">
+						<label class="form-label">내용</label>
+						<textarea class="form-textarea" id="add-content" style="min-height: 120px"></textarea>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px">
+						<div class="form-group">
+							<label class="form-label">작성자 이름</label>
+							<input type="text" class="form-input" id="add-author-name" />
+						</div>
+						<div class="form-group">
+							<label class="form-label">이메일</label>
+							<input type="email" class="form-input" id="add-author-email" />
+						</div>
+						<div class="form-group">
+							<label class="form-label">연락처</label>
+							<input type="text" class="form-input" id="add-author-phone" />
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="form-label">상태</label>
+						<select class="form-select" id="add-status">
+							<option value="approved">승인</option>
+							<option value="pending">검토중</option>
+							<option value="rejected">반려</option>
+						</select>
+					</div>
+					<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px">
+						<button type="button" class="btn btn-outline btn-sm" id="add-btn-cancel">취소</button>
+						<button type="submit" class="btn btn-primary btn-sm">등록</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- 상세 Modal -->
+		<div class="modal-overlay" id="post-modal">
+			<div class="modal">
+				<div class="modal-header">
+					<h3 class="modal-title">게시글 상세</h3>
+					<button class="modal-close" id="modal-close">✕</button>
+				</div>
+				<div id="modal-body"></div>
+				<div style="display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end">
+					<button class="btn btn-primary btn-sm" id="btn-approve">✅ 승인</button>
+					<button class="btn btn-outline btn-sm" id="btn-reject" style="color: #ef4444; border-color: #ef4444">❌ 반려</button>
+					<button class="btn btn-outline btn-sm" id="btn-delete" style="color: #ef4444; border-color: #ef4444">🗑 삭제</button>
+				</div>
+			</div>
+		</div>
+
+		<script type="module">
+			import { requireAuth, renderAdminUser } from '/src/js/auth.js';
+			import { supabase } from '/src/lib/supabase.js';
+			import { formatDate, truncate, showToast, renderPagination } from '/src/js/utils.js';
+
+			await requireAuth();
+			await renderAdminUser();
+
+			let currentPage = 1;
+			const PER_PAGE = 15;
+			let currentPostId = null;
+
+			const statusMap = {
+				pending: ['badge-yellow', '검토중'],
+				approved: ['badge-green', '승인'],
+				rejected: ['badge-red', '반려'],
+			};
+
+			async function loadPosts() {
+				const category = document.getElementById('filter-category').value;
+				const status = document.getElementById('filter-status').value;
+				const search = document.getElementById('search-input').value.trim();
+
+				let query = supabase.from('posts').select('*', { count: 'exact' });
+				if (category) query = query.eq('category', category);
+				if (status) query = query.eq('status', status);
+				if (search) query = query.or(`title.ilike.%${search}%,author_name.ilike.%${search}%`);
+				query = query.order('created_at', { ascending: false }).range((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE - 1);
+
+				const { data, count, error } = await query;
+				const tbody = document.getElementById('posts-list');
+
+				if (error) {
+					tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#EF4444;padding:32px">로드 오류: ${error.message}</td></tr>`;
+					return;
+				}
+				if (!data?.length) {
+					tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-light)">게시글이 없습니다.</td></tr>';
+					return;
+				}
+
+				tbody.innerHTML = data
+					.map(p => {
+						const [cls, label] = statusMap[p.status] || ['badge-gray', p.status];
+						return `<tr>
+        <td><a href="#" onclick="openPost('${p.id}')" style="color:var(--primary);font-weight:500">${truncate(p.title, 40)}</a></td>
+        <td><span class="badge badge-blue">${p.category}${p.sub_category ? ' / ' + p.sub_category : ''}</span></td>
+        <td>${p.author_name || '-'}</td>
+        <td><small>${p.author_email || ''}</small></td>
+        <td><span class="badge ${cls}">${label}</span></td>
+        <td>${formatDate(p.created_at)}</td>
+        <td><div class="table-actions">
+          <button class="icon-btn" title="승인" onclick="patchPost('${p.id}','pending')">✅</button>
+          <button class="icon-btn danger" title="삭제" onclick="deletePost('${p.id}')">🗑</button>
+        </div></td>
+      </tr>`;
+					})
+					.join('');
+
+				renderPagination('pagination-wrap', {
+					current: currentPage,
+					total: count,
+					perPage: PER_PAGE,
+					onChange: p => {
+						currentPage = p;
+						loadPosts();
+					},
+				});
+			}
+
+			window.openPost = async id => {
+				const { data } = await supabase.from('posts').select('*').eq('id', id).single();
+				if (!data) return;
+				currentPostId = id;
+				const [cls, label] = statusMap[data.status] || ['badge-gray', data.status];
+				document.getElementById('modal-body').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div><strong>제목:</strong> ${data.title}</div>
+        <div><strong>카테고리:</strong> ${data.category}${data.sub_category ? ' / ' + data.sub_category : ''}</div>
+        <div><strong>작성자:</strong> ${data.author_name || '-'} (${data.author_email || '-'})</div>
+        <div><strong>연락처:</strong> ${data.author_phone || '-'}</div>
+        <div><strong>상태:</strong> <span class="badge ${cls}">${label}</span></div>
+        <div><strong>내용:</strong><br /><div style="background:var(--bg);padding:12px;border-radius:8px;margin-top:4px;white-space:pre-wrap">${data.content || '-'}</div></div>
+        ${data.images?.length ? `<div><strong>이미지:</strong><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${data.images.map(u => `<img src="${u}" style="max-width:160px;border-radius:8px" onerror="this.style.display='none'">`).join('')}</div></div>` : ''}
+        <div><strong>등록일:</strong> ${formatDate(data.created_at, 'YYYY.MM.DD')}</div>
+      </div>
+    `;
+				document.getElementById('post-modal').classList.add('open');
+			};
+
+			window.patchPost = async (id, status) => {
+				const newStatus = status === 'pending' ? 'approved' : status;
+				await supabase
+					.from('posts')
+					.update({ status: newStatus === 'pending' ? 'approved' : newStatus })
+					.eq('id', id);
+				showToast('상태가 변경되었습니다.', 'success');
+				loadPosts();
+			};
+
+			window.deletePost = async id => {
+				if (!confirm('정말 삭제하시겠습니까?')) return;
+				await supabase.from('posts').delete().eq('id', id);
+				showToast('삭제되었습니다.', 'info');
+				loadPosts();
+			};
+
+			document.getElementById('modal-close').onclick = () => document.getElementById('post-modal').classList.remove('open');
+
+			// ─── 게시글 추가 ─────────────────────────────────────────
+			document.getElementById('btn-add-post').onclick = () => {
+				document.getElementById('add-post-form').reset();
+				document.getElementById('add-post-modal').classList.add('open');
+			};
+			document.getElementById('add-modal-close').onclick = () => document.getElementById('add-post-modal').classList.remove('open');
+			document.getElementById('add-btn-cancel').onclick = () => document.getElementById('add-post-modal').classList.remove('open');
+
+			document.getElementById('add-post-form').onsubmit = async e => {
+				e.preventDefault();
+				const payload = {
+					category: document.getElementById('add-category').value,
+					sub_category: document.getElementById('add-sub-category').value || null,
+					title: document.getElementById('add-title').value,
+					content: document.getElementById('add-content').value || null,
+					author_name: document.getElementById('add-author-name').value || null,
+					author_email: document.getElementById('add-author-email').value || null,
+					author_phone: document.getElementById('add-author-phone').value || null,
+					status: document.getElementById('add-status').value,
+				};
+				const { error } = await supabase.from('posts').insert([payload]);
+				if (error) {
+					showToast('등록 실패: ' + error.message, 'error');
+					return;
+				}
+				document.getElementById('add-post-modal').classList.remove('open');
+				showToast('게시글이 등록되었습니다.', 'success');
+				currentPage = 1;
+				loadPosts();
+			};
+
+			document.getElementById('btn-approve').onclick = async () => {
+				await supabase.from('posts').update({ status: 'approved' }).eq('id', currentPostId);
+				document.getElementById('post-modal').classList.remove('open');
+				showToast('승인되었습니다.', 'success');
+				loadPosts();
+			};
+
+			document.getElementById('btn-reject').onclick = async () => {
+				await supabase.from('posts').update({ status: 'rejected' }).eq('id', currentPostId);
+				document.getElementById('post-modal').classList.remove('open');
+				showToast('반려되었습니다.', 'info');
+				loadPosts();
+			};
+
+			document.getElementById('btn-delete').onclick = async () => {
+				if (!confirm('삭제하시겠습니까?')) return;
+				await supabase.from('posts').delete().eq('id', currentPostId);
+				document.getElementById('post-modal').classList.remove('open');
+				showToast('삭제되었습니다.', 'info');
+				loadPosts();
+			};
+
+			document.getElementById('search-btn').onclick = () => {
+				currentPage = 1;
+				loadPosts();
+			};
+			document.getElementById('filter-category').onchange = () => {
+				currentPage = 1;
+				loadPosts();
+			};
+			document.getElementById('filter-status').onchange = () => {
+				currentPage = 1;
+				loadPosts();
+			};
+
+			loadPosts();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>게시판 - DGE Book Life</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+	</head>
+	<body class="page-body">
+		<header class="site-header">
+			<div class="container header-inner">
+				<a href="/" class="site-logo">DGE Book Life</a>
+				<nav class="main-nav">
+					<div class="nav-item">
+						내 손의 책
+						<div class="nav-dropdown">
+							<a href="/pages/book/campaign.html">캠페인 소개</a>
+							<a href="/pages/book/archive-2025.html">2025 아카이브</a>
+							<a href="/pages/book/download.html">다운로드 자료</a>
+						</div>
+					</div>
+					<div class="nav-item">
+						내 삶의 힘
+						<div class="nav-dropdown">
+							<a href="/pages/life/program.html">프로그램</a>
+							<a href="/pages/life/event.html">이벤트</a>
+							<a href="/pages/life/contest.html">공모전</a>
+						</div>
+					</div>
+					<a class="nav-item active" href="/pages/board/index.html">게시판</a>
+				</nav>
+			</div>
+		</header>
+
+		<section style="background: var(--primary); color: white; padding: 60px 0 40px">
+			<div class="container" style="text-align: center">
+				<h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 8px">참여 게시판</h1>
+				<p style="opacity: 0.85">캠페인 활동을 공유해 주세요</p>
+			</div>
+		</section>
+
+		<section class="section-sm">
+			<div class="container">
+				<!-- 탭 -->
+				<div style="display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 28px">
+					<button
+						class="tab-btn active"
+						data-category="board"
+						style="
+							padding: 12px 24px;
+							border: none;
+							background: none;
+							font-size: 0.95rem;
+							font-weight: 600;
+							color: var(--primary);
+							border-bottom: 2px solid var(--primary);
+							margin-bottom: -2px;
+							cursor: pointer;
+						"
+					>
+						전체 게시물
+					</button>
+					<button class="tab-btn" data-category="contest" style="padding: 12px 24px; border: none; background: none; font-size: 0.95rem; font-weight: 500; color: var(--text-light); cursor: pointer">
+						공모전 참여작
+					</button>
+				</div>
+
+				<!-- 글 목록 상단 -->
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
+					<span id="total-count" style="font-size: 0.875rem; color: var(--text-light)">로딩 중...</span>
+					<a href="/pages/board/write.html" class="btn btn-primary btn-sm">✏️ 글쓰기</a>
+				</div>
+
+				<!-- 게시글 테이블 -->
+				<div style="background: white; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden">
+					<table style="width: 100%; border-collapse: collapse">
+						<thead>
+							<tr style="background: #f8fafc">
+								<th style="padding: 12px 16px; text-align: left; font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; border-bottom: 1px solid var(--border)">
+									번호
+								</th>
+								<th style="padding: 12px 16px; text-align: left; font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; border-bottom: 1px solid var(--border)">
+									제목
+								</th>
+								<th style="padding: 12px 16px; text-align: left; font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; border-bottom: 1px solid var(--border)">
+									작성자
+								</th>
+								<th style="padding: 12px 16px; text-align: left; font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; border-bottom: 1px solid var(--border)">
+									날짜
+								</th>
+							</tr>
+						</thead>
+						<tbody id="posts-list">
+							<tr>
+								<td colspan="4" style="text-align: center; padding: 48px"><div class="spinner"></div></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div id="pagination-wrap"></div>
+			</div>
+		</section>
+
+		<!-- 게시글 상세 Modal -->
+		<div class="modal-overlay" id="post-modal">
+			<div class="modal" style="max-width: 640px">
+				<div class="modal-header">
+					<h3 class="modal-title" id="modal-title"></h3>
+					<button class="modal-close" id="modal-close">✕</button>
+				</div>
+				<div id="modal-body"></div>
+			</div>
+		</div>
+
+		<footer class="site-footer">
+			<div class="container">
+				<div class="footer-bottom"><p>© 2025 DGE Book Life. All rights reserved.</p></div>
+			</div>
+		</footer>
+
+		<script type="module">
+			import { getPosts } from '/src/lib/supabase.js';
+			import { formatDate, truncate, renderPagination } from '/src/js/utils.js';
+
+			let currentPage = 1;
+			let currentCategory = 'board';
+
+			async function load() {
+				const { data, count, error } = await getPosts({ category: currentCategory, status: 'approved', page: currentPage, limit: 15 });
+				const tbody = document.getElementById('posts-list');
+				const totalEl = document.getElementById('total-count');
+
+				if (error || !data?.length) {
+					tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:48px;color:var(--text-light)">게시글이 없습니다.</td></tr>';
+					totalEl.textContent = '게시글 0개';
+					return;
+				}
+				totalEl.textContent = `총 ${count}개의 게시글`;
+
+				const startNum = count - (currentPage - 1) * 15;
+				tbody.innerHTML = data
+					.map(
+						(p, i) => `
+        <tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openPost('${p.id}')">
+          <td style="padding:14px 16px;font-size:0.875rem;color:var(--text-light)">${startNum - i}</td>
+          <td style="padding:14px 16px;font-size:0.875rem;font-weight:500">
+            ${truncate(p.title, 50)}
+            ${p.images?.length ? '<span style="font-size:0.75rem;color:var(--accent);margin-left:4px">📷</span>' : ''}
+          </td>
+          <td style="padding:14px 16px;font-size:0.875rem;color:var(--text-mid)">${p.author_name || '-'}</td>
+          <td style="padding:14px 16px;font-size:0.8rem;color:var(--text-light)">${formatDate(p.created_at)}</td>
+        </tr>
+      `
+					)
+					.join('');
+
+				renderPagination('pagination-wrap', {
+					current: currentPage,
+					total: count,
+					perPage: 15,
+					onChange: p => {
+						currentPage = p;
+						load();
+					},
+				});
+			}
+
+			window.openPost = async id => {
+				const { data } = await (await import('/src/lib/supabase.js')).supabase.from('posts').select('*').eq('id', id).single();
+				if (!data) return;
+				document.getElementById('modal-title').textContent = data.title;
+				document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:0.8rem;color:var(--text-light);margin-bottom:16px">
+          ${data.author_name} · ${(await import('/src/js/utils.js')).formatDate(data.created_at)}
+        </div>
+        <div style="white-space:pre-wrap;line-height:1.8;margin-bottom:16px">${data.content || ''}</div>
+        ${data.images?.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">${data.images.map(u => `<img src="${u}" style="max-width:200px;border-radius:8px" onerror="this.style.display='none'">`).join('')}</div>` : ''}
+      `;
+				document.getElementById('post-modal').classList.add('open');
+			};
+
+			document.getElementById('modal-close').onclick = () => document.getElementById('post-modal').classList.remove('open');
+
+			document.querySelectorAll('.tab-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					document.querySelectorAll('.tab-btn').forEach(b => {
+						b.style.color = 'var(--text-light)';
+						b.style.borderBottom = 'none';
+						b.classList.remove('active');
+					});
+					btn.style.color = 'var(--primary)';
+					btn.style.borderBottom = '2px solid var(--primary)';
+					btn.style.marginBottom = '-2px';
+					btn.classList.add('active');
+					currentCategory = btn.dataset.category;
+					currentPage = 1;
+					load();
+				});
+			});
+
+			load();
+		</script>
+	</body>
+</html>

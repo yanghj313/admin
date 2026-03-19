@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>2025 아카이브 - DGE Book Life</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/src/css/main.css" />
+	</head>
+	<body class="page-body">
+		<header class="site-header">
+			<div class="container header-inner">
+				<a href="/" class="site-logo">DGE Book Life</a>
+				<nav class="main-nav">
+					<div class="nav-item active">
+						내 손의 책
+						<div class="nav-dropdown">
+							<a href="/pages/book/campaign.html">캠페인 소개</a>
+							<a href="/pages/book/archive-2025.html">2025 아카이브</a>
+							<a href="/pages/book/download.html">다운로드 자료</a>
+						</div>
+					</div>
+					<div class="nav-item">
+						내 삶의 힘
+						<div class="nav-dropdown">
+							<a href="/pages/life/program.html">프로그램</a>
+							<a href="/pages/life/event.html">이벤트</a>
+							<a href="/pages/life/contest.html">공모전</a>
+						</div>
+					</div>
+					<a class="nav-item" href="/pages/board/index.html">게시판</a>
+				</nav>
+			</div>
+		</header>
+
+		<section style="background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 80px 0 60px">
+			<div class="container" style="text-align: center">
+				<h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 12px">2025 아카이브</h1>
+				<p style="opacity: 0.8">2025년 캠페인 활동 기록을 확인하세요</p>
+			</div>
+		</section>
+
+		<!-- 카테고리 탭 -->
+		<section class="section-sm">
+			<div class="container">
+				<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px">
+					<button class="btn btn-primary btn-sm archive-tab" data-sub="">전체</button>
+					<button class="btn btn-outline btn-sm archive-tab" data-sub="사행시">내책내힘 사행시</button>
+					<button class="btn btn-outline btn-sm archive-tab" data-sub="북끈챌린지">북끈 챌린지</button>
+					<button class="btn btn-outline btn-sm archive-tab" data-sub="인생책">인생 책 공유</button>
+					<button class="btn btn-outline btn-sm archive-tab" data-sub="인증샷">인증샷 챌린지</button>
+					<button class="btn btn-outline btn-sm archive-tab" data-sub="공모전">내만내책 공모전</button>
+				</div>
+
+				<div class="gallery-grid" id="archive-grid">
+					<div style="grid-column: 1/-1; text-align: center"><div class="spinner"></div></div>
+				</div>
+				<div id="pagination-wrap"></div>
+			</div>
+		</section>
+
+		<footer class="site-footer">
+			<div class="container">
+				<div class="footer-bottom"><p>© 2025 DGE Book Life. All rights reserved.</p></div>
+			</div>
+		</footer>
+
+		<script type="module">
+			import { getPosts } from '/src/lib/supabase.js';
+			import { formatDate, renderPagination } from '/src/js/utils.js';
+
+			let currentPage = 1;
+			let currentSub = '';
+
+			async function load() {
+				const grid = document.getElementById('archive-grid');
+				grid.innerHTML = '<div style="grid-column:1/-1;text-align:center"><div class="spinner"></div></div>';
+				const { data, count, error } = await getPosts({
+					category: 'archive',
+					sub_category: currentSub || undefined,
+					status: 'approved',
+					page: currentPage,
+					limit: 9,
+				});
+				if (error || !data?.length) {
+					grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-light);padding:48px">아카이브가 없습니다.</div>';
+					return;
+				}
+				const colors = ['#fffde7', '#e8f5e9', '#e3f2fd', '#fce4ec', '#f3e5f5', '#fff3e0', '#e0f7fa', '#f9fbe7'];
+				grid.innerHTML = data
+					.map((p, i) => {
+						const bg = colors[i % colors.length];
+						const text = (p.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+						return `
+			<div style="background:${bg};border-radius:12px;padding:24px;box-shadow:2px 4px 12px rgba(0,0,0,0.08);display:flex;flex-direction:column;gap:12px;">
+			  ${p.sub_category ? `<span class="badge badge-blue" style="align-self:flex-start">${p.sub_category}</span>` : ''}
+			  ${p.images?.length ? `<img src="${p.images[0]}" alt="${p.title}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` : ''}
+			  <div style="font-weight:700;font-size:1rem;line-height:1.5;color:#1a1a2e">${p.title}</div>
+			  <div style="font-size:0.875rem;line-height:1.8;color:#444;white-space:pre-wrap;flex:1">${text}</div>
+			  <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;color:#888;border-top:1px solid rgba(0,0,0,0.08);padding-top:10px;margin-top:4px">
+			    <span>✍️ ${p.author_name || ''}</span><span>${formatDate(p.created_at)}</span>
+			  </div>
+			</div>`;
+					})
+					.join('');
+
+				renderPagination('pagination-wrap', {
+					current: currentPage,
+					total: count,
+					perPage: 9,
+					onChange: p => {
+						currentPage = p;
+						load();
+					},
+				});
+			}
+
+			document.querySelectorAll('.archive-tab').forEach(btn => {
+				btn.addEventListener('click', () => {
+					document.querySelectorAll('.archive-tab').forEach(b => (b.className = 'btn btn-outline btn-sm archive-tab'));
+					btn.className = 'btn btn-primary btn-sm archive-tab';
+					currentSub = btn.dataset.sub;
+					currentPage = 1;
+					load();
+				});
+			});
+
+			load();
+		</script>
+	</body>
+</html>
