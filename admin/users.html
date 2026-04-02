@@ -23,8 +23,14 @@
 					<button data-action="signout" class="btn btn-outline btn-sm" style="width: 100%">로그아웃</button>
 				</div>
 			</aside>
+			<div class="sidebar-overlay" id="sidebar-overlay"></div>
 			<main class="admin-main">
 				<div class="admin-topbar">
+					<button class="hamburger-btn" id="hamburger-btn" aria-label="메뉴 열기">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+							<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+						</svg>
+					</button>
 					<span class="topbar-title">👤 사용자 관리</span>
 				</div>
 				<div class="admin-content">
@@ -70,9 +76,11 @@
 			import { requireAuth, renderAdminUser } from '/src/js/auth.js';
 			import { supabase } from '/src/lib/supabase.js';
 			import { formatDate } from '/src/js/utils.js';
+			import { initSidebarToggle } from '/src/js/admin-nav.js';
 
 			await requireAuth();
 			await renderAdminUser();
+			initSidebarToggle();
 
 			let allUsers = [];
 

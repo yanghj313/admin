@@ -37,10 +37,16 @@
 					<button data-action="signout" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 12px">로그아웃</button>
 				</div>
 			</aside>
+			<div class="sidebar-overlay" id="sidebar-overlay"></div>
 
 			<!-- ── Main ───────────────────────────────────────────── -->
 			<main class="admin-main">
 				<div class="admin-topbar">
+					<button class="hamburger-btn" id="hamburger-btn" aria-label="메뉴 열기">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+							<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+						</svg>
+					</button>
 					<span class="topbar-title">📊 대시보드</span>
 					<div class="topbar-actions">
 						<a href="/pages/life/program.html" class="btn btn-primary btn-sm" target="_blank">사이트 방문</a>
@@ -111,11 +117,13 @@
 
 		<script type="module">
 			import { requireAuth, renderAdminUser } from '/src/js/auth.js';
+			import { initSidebarToggle } from '/src/js/admin-nav.js';
 			import { supabase } from '/src/lib/supabase.js';
 			import { formatDate, truncate } from '/src/js/utils.js';
 
 			await requireAuth();
 			await renderAdminUser();
+			initSidebarToggle();
 
 			// 통계 로드
 			async function loadStats() {
